@@ -1,0 +1,453 @@
+#include <iostream>
+#include <iomanip>
+#include <time.h>
+using namespace std;
+const int MAXW = 5;
+const int MAXK = 5;
+const int MAXS = 6;
+const int W = 20;
+const int K = 40;
+const int segWszerz = 8;
+const int segWzdluz = 4;
+const int LOSY = 32;
+
+struct wierzcholek
+{
+	int wartoscWierzcholka = -1;
+	wierzcholek* nastepny = nullptr;
+	bool odwiedzony = 0;
+	int poprzedniWierzcholek = -1;
+
+};
+void segmentA(char tab[MAXW][MAXK][MAXS]);
+void segmentB(char tab[MAXW][MAXK][MAXS]);
+void segmentC(char tab[MAXW][MAXK][MAXS]);
+void segmentD(char tab[MAXW][MAXK][MAXS]);
+void segmentE(char tab[MAXW][MAXK][MAXS]);
+void segmentF(char tab[MAXW][MAXK][MAXS]);
+void mapa(char tab1[MAXW][MAXK][MAXS], int tab2[LOSY], char tab3[W][K]);
+void rysSegm(char tab1[MAXW][MAXK][MAXS], char tab3[W][K], int segK, int segW, int segTyp);
+void wyswietlacz(char tab[W][K]);
+void losowanie(char tab[W][K], char*& adresStart, char*& adresMeta);
+void dodajWierzcholek(wierzcholek*& aktualnyWierzcholek, int wartosc);
+void piszSasiadow(wierzcholek* aktualnyWierzcholek);
+int wygenerujnumer(int x, int y);
+wierzcholek** znajdzKoniecWierzcholka(wierzcholek** aktualnyWierzcholek);
+void dodajWierzcholekNaKoncu(wierzcholek*& aktualnyWierzcholek, int wartosc);
+void WygenerujListy(wierzcholek* tablicaWierzcholkow[], char Mapa[W][K]);
+void SprawdzTabliceWierzcholkow(wierzcholek* tablicaWierzcholkow[], char Mapa[W][K]);
+bool sprawdzCzyWierzcholek(char mapa[W][K], int pozyjcaW, int pozycjaK);
+void DodajWierzcholekDoListy(wierzcholek*& WierzWskaz, char mapa[W][K], int pozycjaW, int pozycjaK);
+int ZnajdzIndeksS(char Mapa[W][K]);
+int ZnajdzIndeksM(char Mapa[W][K]);
+void bfs(wierzcholek* tablicaWierzcholkow[], char Mapa[W][K]);
+class Kolejka
+{
+	int* tab = nullptr;
+	int poczatek = 0;
+	int koniec = 0;
+public:
+	Kolejka(int number)
+	{
+		tab = new int[number];
+	}
+	void dodajDoKolejki(int wartosc)
+	{
+		tab[koniec] = wartosc;
+		koniec++;
+	}
+	int wezZKolejki()
+	{
+		int wartosc = tab[poczatek];
+		poczatek++;
+		return wartosc;
+	}
+	int dlugoscKolejki()
+	{
+		return koniec - poczatek;
+	}
+	~Kolejka()
+	{
+		delete tab;
+
+	}
+};
+
+
+int main()
+{
+	srand(time(NULL));
+	char segmenty[MAXW][MAXK][MAXS];
+	int losy[LOSY];
+	char Mapka[W][K];
+	int LiczbaWiercholkow = 0;
+	segmentA(segmenty);
+	segmentB(segmenty);
+	segmentC(segmenty);
+	segmentD(segmenty);
+	segmentE(segmenty);
+	segmentF(segmenty);
+	mapa(segmenty, losy, Mapka);
+	char* pStart;
+	char* pMeta;
+	losowanie(Mapka, pStart, pMeta);
+	cout << "================================" << endl;
+	cout << "Mapa:" << endl;
+	cout << "================================" << endl;
+	wyswietlacz(Mapka);
+	wierzcholek* tablicaWierzcholkow[W * K];
+	for (int i = 0; i < W * K; i++)
+	{
+		tablicaWierzcholkow[i] = nullptr;
+	}
+	cout << "================================" << endl;
+	cout << "Lista sasiedztwa wierzcholkow: " << endl;
+	cout << "================================" << endl;
+	WygenerujListy(tablicaWierzcholkow, Mapka);
+	SprawdzTabliceWierzcholkow(tablicaWierzcholkow, Mapka);
+	cout << "================================" << endl;
+	cout << "Rozwiazanie problemu:" << endl;
+	cout << "================================" << endl;
+	bfs(tablicaWierzcholkow, Mapka);
+
+}
+void segmentA(char tab[MAXW][MAXK][MAXS])
+{
+	for (int i = 0; i < MAXW; i++)
+	{
+		for (int j = 0; j < MAXK; j++)
+		{
+			tab[i][j][0] = ' ';
+		}
+
+	}
+	tab[0][2][0] = tab[1][2][0] = tab[1][1][0] = tab[2][1][0] = tab[2][0][0] = tab[3][1][0] = tab[3][2][0] = tab[3][3][0] = tab[4][2][0] = tab[2][3][0] = tab[2][4][0] = '1';
+}
+void segmentB(char tab[MAXW][MAXK][MAXS])
+{
+	for (int i = 0; i < MAXW; i++)
+	{
+		for (int j = 0; j < MAXK; j++)
+		{
+			tab[i][j][1] = ' ';
+		}
+
+	}
+	tab[1][0][1] = tab[0][2][1] = tab[0][3][1] = tab[1][3][1] = tab[2][3][1] = tab[2][4][1] = tab[2][2][1] = tab[2][1][1] = tab[2][0][1] = tab[3][1][1] = tab[3][2][1] = tab[3][3][1] = tab[4][2][1] = tab[4][3][1] = '1';
+}
+void segmentC(char tab[MAXW][MAXK][MAXS])
+{
+	for (int i = 0; i < MAXW; i++)
+	{
+		for (int j = 0; j < MAXK; j++)
+		{
+			tab[i][j][2] = '1';
+		}
+
+	}
+	tab[1][2][2] = tab[2][2][2] = tab[3][2][2] = tab[3][3][2] = tab[2][3][2] = tab[3][4][2] = tab[3][0][2] = tab[4][0][2] = ' ';
+}
+void segmentD(char tab[MAXW][MAXK][MAXS])
+{
+	for (int i = 0; i < MAXW; i++)
+	{
+		for (int j = 0; j < MAXK; j++)
+		{
+			tab[i][j][3] = '1';
+		}
+
+	}
+	tab[0][0][3] = tab[1][0][3] = tab[0][1][3] = tab[1][3][3] = tab[2][2][3] = tab[3][1][3] = tab[4][0][3] = tab[3][4][3] = tab[4][4][3] = tab[4][3][3] = ' ';
+}
+void segmentE(char tab[MAXW][MAXK][MAXS])
+{
+	for (int i = 0; i < MAXW; i++)
+	{
+		for (int j = 0; j < MAXK; j++)
+		{
+			tab[i][j][4] = ' ';
+		}
+
+	}
+	tab[0][0][4] = tab[0][1][4] = tab[0][2][4] = tab[1][1][4] = tab[1][2][4] = tab[1][3][4] = tab[2][0][4] = tab[2][1][4] = tab[2][3][4] = tab[2][4][4] = tab[3][0][4] = tab[3][1][4] = tab[3][3][4] = tab[3][4][4] = tab[4][0][4] = tab[4][1][4] = tab[4][2][4] = tab[4][3][4] = '1';
+}
+void segmentF(char tab[MAXW][MAXK][MAXS])
+{
+	for (int i = 0; i < MAXW; i++)
+	{
+		for (int j = 0; j < MAXK; j++)
+		{
+			tab[i][j][5] = ' ';
+		}
+
+	}
+	tab[0][2][5] = tab[1][2][5] = tab[2][2][5] = tab[3][2][5] = tab[4][2][5] = tab[2][0][5] = tab[2][1][5] = tab[2][2][5] = tab[2][3][5] = tab[2][4][5] = '1';
+}
+void mapa(char tab1[MAXW][MAXK][MAXS], int tab2[LOSY], char tab3[W][K])
+{
+
+
+	for (int w = 0; w < segWzdluz; w++)
+	{
+		for (int k = 0; k < segWszerz; k++)
+		{
+			int los = rand() % 6;
+			rysSegm(tab1, tab3, k, w, los);
+		}
+	}
+
+
+
+}
+void rysSegm(char tab1[MAXW][MAXK][MAXS], char tab3[W][K], int segK, int segW, int segTyp)
+{
+
+	for (int k = 0; k < MAXK; k++)
+	{
+		for (int w = 0; w < MAXW; w++)
+		{
+			tab3[w + segW * MAXW][k + segK * MAXK] = tab1[w][k][segTyp];
+		}
+	}
+
+
+}
+void wyswietlacz(char tab[W][K])
+{
+
+	for (int i = 0; i < W; i++)
+	{
+		for (int j = 0; j < K; j++)
+		{
+			cout << tab[i][j];
+
+		}
+		cout << endl;
+	}
+}
+void losowanie(char tab[W][K], char*& adresStart, char*& adresMeta)
+{
+
+	int startW = rand() % 20;
+	int startK = rand() % 40;
+	int metaW = rand() % 20;
+	int metaK = rand() % 40;
+	if (tab[startW][startK] == '1' && tab[metaW][metaK] == '1')
+	{
+		tab[startW][startK] = 's';
+		tab[metaW][metaK] = 'm';
+
+		adresStart = &tab[startW][startK];
+		adresMeta = &tab[metaW][metaK];
+	}
+	else
+		losowanie(tab, adresStart, adresMeta);
+}
+wierzcholek** znajdzKoniecWierzcholka(wierzcholek** aktualnyWierzcholek)
+{
+	while ((*aktualnyWierzcholek) != nullptr)
+	{
+		aktualnyWierzcholek = &((*aktualnyWierzcholek)->nastepny);
+	}
+	return aktualnyWierzcholek;
+}
+void dodajWierzcholek(wierzcholek*& aktualnyWierzcholek, int wartosc)
+{
+	aktualnyWierzcholek = new wierzcholek;
+	aktualnyWierzcholek->wartoscWierzcholka = wartosc;
+}
+void dodajWierzcholekNaKoncu(wierzcholek*& aktualnyWierzcholek, int wartosc)
+{
+	dodajWierzcholek(*znajdzKoniecWierzcholka(&aktualnyWierzcholek), wartosc);
+}
+
+int wygenerujnumer(int w, int k)
+{
+	return k + w * K;
+}
+
+bool sprawdzCzyWierzcholek(char mapa[W][K], int pozycjaW, int pozycjaK)
+{
+	if (pozycjaW < 0)
+	{
+		return false;
+	}
+	if (pozycjaW >= W)
+	{
+		return false;
+	}
+	if (pozycjaK < 0)
+	{
+		return false;
+	}
+	if (pozycjaK >= K)
+	{
+		return false;
+	}
+	if (mapa[pozycjaW][pozycjaK] == ' ')
+	{
+		return false;
+	}
+	return  true;
+}
+void DodajWierzcholekDoListy(wierzcholek* &WierzWskaz, char mapa[W][K], int pozycjaW, int pozycjaK)
+{
+	if (sprawdzCzyWierzcholek(mapa, pozycjaW, pozycjaK) == true)
+	{
+		dodajWierzcholekNaKoncu(WierzWskaz, wygenerujnumer(pozycjaW, pozycjaK));
+	}
+}
+
+void WygenerujListy(wierzcholek* tablicaWierzcholkow[], char Mapa[W][K])
+{
+
+	for (int i = 0; i < W; i++)
+	{
+		for (int j = 0; j < K; j++)
+		{
+			if (Mapa[i][j] == '1' || Mapa[i][j] == 's' || Mapa[i][j] == 'm')
+			{
+
+
+				DodajWierzcholekDoListy(tablicaWierzcholkow[wygenerujnumer(i, j)], Mapa, i + 1, j);
+				DodajWierzcholekDoListy(tablicaWierzcholkow[wygenerujnumer(i, j)], Mapa, i - 1, j);
+				DodajWierzcholekDoListy(tablicaWierzcholkow[wygenerujnumer(i, j)], Mapa, i, j + 1);
+				DodajWierzcholekDoListy(tablicaWierzcholkow[wygenerujnumer(i, j)], Mapa, i, j - 1);
+			}
+
+		}
+	}
+}
+
+void piszSasiadow(wierzcholek* aktualnyWierzcholek)
+{
+	while (aktualnyWierzcholek != nullptr)
+	{
+		cout << aktualnyWierzcholek->wartoscWierzcholka << " ";
+		aktualnyWierzcholek = aktualnyWierzcholek->nastepny;
+	}
+	cout << "NULL" << endl;
+}
+
+void SprawdzTabliceWierzcholkow(wierzcholek* tablicaWierzcholkow[], char Mapa[W][K])
+{
+
+	for (int i = 0; i < W; i++)
+	{
+		for (int j = 0; j < K; j++)
+		{
+			if (tablicaWierzcholkow[wygenerujnumer(i, j)] != nullptr)
+			{
+				cout << "Numer pozycji:" << '[' << i << ']' << '[' << j << ']' << endl << "Sasiedzi: ";
+				piszSasiadow(tablicaWierzcholkow[wygenerujnumer(i, j)]);
+
+			}
+
+		}
+	}
+}
+int ZnajdzIndeksS(char Mapa[W][K])
+{
+	for (int i = 0; i < W; i++)
+	{
+		for (int j = 0; j < K; j++)
+		{
+			if (Mapa[i][j] == 's')
+			{
+				if (i == 0 && j != 0)
+				{
+					return j;
+				}
+				if (j == 0 && i != 0)
+				{
+					return i * 40;
+				}
+
+				return (i * 40 + j);
+
+			}
+
+		}
+	}
+
+}int ZnajdzIndeksM(char Mapa[W][K])
+{
+	for (int i = 0; i < W; i++)
+	{
+		for (int j = 0; j < K; j++)
+		{
+			if (Mapa[i][j] == 'm')
+			{
+				if (i == 0 && j != 0)
+				{
+					return j;
+				}
+				if (j == 0 && i != 0)
+				{
+					return i * 40;
+				}
+
+				return (i * 40 + j);
+
+			}
+
+		}
+	}
+
+}
+void bfs(wierzcholek* tablicaWierzcholkow[], char Mapa[W][K])
+{
+
+	Kolejka NowaKolejka(W * K);
+	wierzcholek* elementKolejki;
+
+	NowaKolejka.dodajDoKolejki(ZnajdzIndeksS(Mapa));
+	tablicaWierzcholkow[ZnajdzIndeksS(Mapa)]->odwiedzony = 1;
+	elementKolejki = tablicaWierzcholkow[ZnajdzIndeksS(Mapa)];
+	int poprzedniaWartosc = ZnajdzIndeksS(Mapa);
+	while (NowaKolejka.dlugoscKolejki() != 0)
+	{
+		while (elementKolejki != nullptr)
+		{
+			if (tablicaWierzcholkow[elementKolejki->wartoscWierzcholka]->odwiedzony == 0)
+			{
+				tablicaWierzcholkow[elementKolejki->wartoscWierzcholka]->poprzedniWierzcholek = poprzedniaWartosc;
+				tablicaWierzcholkow[elementKolejki->wartoscWierzcholka]->odwiedzony = 1;
+				NowaKolejka.dodajDoKolejki(elementKolejki->wartoscWierzcholka);
+				
+			}
+			elementKolejki = elementKolejki->nastepny;
+		}
+		poprzedniaWartosc = NowaKolejka.wezZKolejki();
+		elementKolejki = tablicaWierzcholkow[poprzedniaWartosc];
+
+	}
+	elementKolejki = tablicaWierzcholkow[ZnajdzIndeksM(Mapa)];
+	while (elementKolejki->poprzedniWierzcholek != -1)
+	{
+		int u = (elementKolejki->poprzedniWierzcholek);
+		int i = u / 40;
+		int j = u % 40;
+		if (Mapa[i][j] == '1')
+		{
+			Mapa[i][j] = 'X';
+		}
+		
+		elementKolejki = tablicaWierzcholkow[elementKolejki->poprzedniWierzcholek];
+	}
+	for (int i = 0; i < W; i++)
+	{
+		for (int j = 0; j < K; j++)
+		{
+			cout << Mapa[i][j];
+		}
+		cout << endl;
+	}
+	
+
+
+
+
+
+
+}
